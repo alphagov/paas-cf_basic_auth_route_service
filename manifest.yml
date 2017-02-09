@@ -1,0 +1,8 @@
+---
+applications:
+ - name: basic-auth-route-service
+   memory: 64M
+   disk_quota: 100M
+   instances: 2
+   command: "./bin/cf_basic_auth_route_service"
+   buildpack: go_buildpack
