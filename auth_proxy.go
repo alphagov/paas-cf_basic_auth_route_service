@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -27,9 +26,6 @@ func NewAuthProxy(username, password string) http.Handler {
 
 func buildBackendProxy() http.Handler {
 	return &httputil.ReverseProxy{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
 		Director: func(req *http.Request) {
 			forwardedURL := req.Header.Get(CF_FORWARDED_URL_HEADER)
 			if forwardedURL == "" {
