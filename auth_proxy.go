@@ -29,6 +29,7 @@ func (a *AuthProxy) checkAuth(user, pass string) bool {
 func (a *AuthProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	user, pass, ok := req.BasicAuth()
 	if !ok || !a.checkAuth(user, pass) {
+		w.Header().Set("WWW-Authenticate", `Basic realm="auth"`)
 		http.Error(w, "Unauthorized.", http.StatusUnauthorized)
 		return
 	}
@@ -36,6 +37,7 @@ func (a *AuthProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	forwardedURL := req.Header.Get(CF_FORWARDED_URL_HEADER)
 	if forwardedURL == "" {
 		http.Error(w, "Missing Forwarded URL", http.StatusBadRequest)
+		return
 	}
 	url, err := url.Parse(forwardedURL)
 	if err != nil {

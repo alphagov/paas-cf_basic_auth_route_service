@@ -73,6 +73,7 @@ var _ = Describe("Basic Auth proxy", func() {
 				proxy.ServeHTTP(w, req)
 
 				Expect(w.Code).To(Equal(http.StatusUnauthorized))
+				Expect(w.Header().Get("WWW-Authenticate")).To(Equal(`Basic realm="auth"`))
 			})
 
 			It("does not make a request to the backend", func() {
