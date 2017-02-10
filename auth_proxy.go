@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -13,12 +14,37 @@ const (
 type AuthProxy struct {
 	username string
 	password string
+	backend  http.Handler
 }
 
 func NewAuthProxy(username, password string) http.Handler {
 	return &AuthProxy{
 		username: username,
 		password: password,
+		backend:  buildBackendProxy(),
+	}
+}
+
+func buildBackendProxy() http.Handler {
+	return &httputil.ReverseProxy{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Director: func(req *http.Request) {
+			forwardedURL := req.Header.Get(CF_FORWARDED_URL_HEADER)
+			if forwardedURL == "" {
+				// This should never happen due to the check in AuthProxy.ServeHTTP
+				panic("missing forwarded URL")
+			}
+			url, err := url.Parse(forwardedURL)
+			if err != nil {
+				// This should never happen due to the check in AuthProxy.ServeHTTP
+				panic("Invalid forwarded URL: " + err.Error())
+			}
+
+			req.URL = url
+			req.Host = url.Host
+		},
 	}
 }
 
@@ -39,12 +65,11 @@ func (a *AuthProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Missing Forwarded URL", http.StatusBadRequest)
 		return
 	}
-	url, err := url.Parse(forwardedURL)
+	_, err := url.Parse(forwardedURL)
 	if err != nil {
 		http.Error(w, "Invalid forward URL: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	proxy := httputil.NewSingleHostReverseProxy(url)
-	proxy.ServeHTTP(w, req)
+	a.backend.ServeHTTP(w, req)
 }
