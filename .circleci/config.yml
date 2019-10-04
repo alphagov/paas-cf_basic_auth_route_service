@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: circleci/golang:1.10
 
-    working_directory: /go/src/github.com/alext/cf_basic_auth_route_service
+    working_directory: /go/src/github.com/alphagov/paas-cf_basic_auth_route_service
     steps:
       - checkout
       - run: go test -v ./...
