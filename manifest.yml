@@ -6,5 +6,4 @@ applications:
    instances: 2
    buildpack: go_buildpack
    env:
-     GOVERSION: go1.10
      GOPACKAGENAME: github.com/alext/cf_basic_auth_route_service
