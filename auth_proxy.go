@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -45,7 +46,11 @@ func buildBackendProxy() http.Handler {
 }
 
 func (a *AuthProxy) checkAuth(user, pass string) bool {
-	return user == a.username && pass == a.password
+	// basic attempt at mitigating timing attacks - an attacker may still be
+	// able to determine the length of a credential or whether they've
+	// successfully guessed the username
+	return subtle.ConstantTimeCompare([]byte(user), []byte(a.username)) != 0 &&
+		subtle.ConstantTimeCompare([]byte(pass), []byte(a.password)) != 0
 }
 
 func (a *AuthProxy) ServeHTTP(w http.ResponseWriter, req *http.Request) {
